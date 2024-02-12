@@ -2,6 +2,20 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+int Win_Width = 1920;
+int Win_Height = 1080;
+
+void glfwWindowSizeCallback(GLFWwindow* window, int width, int height){
+    int Win_Width = width;
+    int Win_Height = height;
+}
+
+void glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode){
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS){
+        glfwSetWindowShouldClose(window, GL_TRUE);
+    }
+}
+
 int main(void){
     GLFWwindow* window;
 
@@ -12,11 +26,14 @@ int main(void){
     }
 
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(640, 480, "Game_Engine", NULL, NULL);
+    window = glfwCreateWindow(Win_Width, Win_Height, "Game_Engine", NULL, NULL);
     if (!window){
         glfwTerminate();
         return -1;
     }
+
+    glfwSetWindowSizeCallback(window, glfwWindowSizeCallback);
+    glfwSetKeyCallback(window, glfwKeyCallback);
 
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
