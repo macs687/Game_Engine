@@ -2,8 +2,38 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-int Win_Width = 1920;
-int Win_Height = 1080;
+GLfloat point[] = {
+    -0.5f, 0.0f, 0.0f,
+    0.5f, 0.0f, 0.0f,
+    0.0f, 0.5f, 0.0f
+};
+
+GLfloat colors[] = {
+    1.0f, 0.0f, 0.0f,
+    0.0f, 1.0f, 0.0f,
+    0.0f, 0.0f, 1.0f
+};
+
+const char* vertex_shader =
+"#version 420\n"
+"layout(location = 0) in vec3 vertex_position;"
+"layout(location = 1) in vec3 vertex_color;"
+"out vec3 color;"
+"void main() {"
+"   color = vertex_color;"
+"   gl_Position = vec4(vertex_position, 1.0);"    
+"}";
+
+const char* fragment_shader =
+"#version 420\n"
+"in vec3 color;"
+"out vec4 frag_color;"
+"void main() {"
+"   frag_color = vec4(color, 1.0);"
+"}";
+
+int Win_Width = 640;
+int Win_Height = 480;
 
 void glfwWindowSizeCallback(GLFWwindow* window, int width, int height){
     int Win_Width = width;
@@ -46,18 +76,56 @@ int main(void){
     const char* version = reinterpret_cast<const char*>(glGetString(GL_VERSION));
     std::cout << "OpenGL version: " << version << std::endl;
 
-    glClearColor(0, 0, 255, 1);
+    glClearColor(1, 1, 1, 1);
 
-    /* Loop until the user closes the window */
-    while (!glfwWindowShouldClose(window))
-    {
-        /* Render here */
+    GLuint vs = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vs, 1, &vertex_shader, nullptr);
+    glCompileShader(vs);
+
+    GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fs, 1, &fragment_shader, nullptr);
+    glCompileShader(fs);
+
+    GLuint shader_program = glCreateProgram();
+    glAttachShader(shader_program, vs);
+    glAttachShader(shader_program, fs);
+    glLinkProgram(shader_program);
+
+    glDeleteShader(vs);
+    glDeleteShader(fs);
+
+    GLuint points_vbo = 0;
+    glGenBuffers(1, &points_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, points_vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(point), point, GL_STATIC_DRAW);
+
+    GLuint colors_vbo = 0;
+    glGenBuffers(1, &colors_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, colors_vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(colors), colors, GL_STATIC_DRAW);
+
+    GLuint vao = 0;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, points_vbo);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+    glEnableVertexAttribArray(1);
+    glBindBuffer(GL_ARRAY_BUFFER, colors_vbo);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+    while (!glfwWindowShouldClose(window)){
+
         glClear(GL_COLOR_BUFFER_BIT);
 
-        /* Swap front and back buffers */
+        glUseProgram(shader_program);
+        glBindVertexArray(vao);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+
         glfwSwapBuffers(window);
 
-        /* Poll for and process events */
         glfwPollEvents();
     }
 
