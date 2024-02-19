@@ -1,6 +1,8 @@
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include "Render/ShaderProgram.h"
+//#include "Math/Math.h"
 
 GLfloat point[] = {
     -0.5f, 0.0f, 0.0f,
@@ -49,13 +51,11 @@ void glfwKeyCallback(GLFWwindow* window, int key, int scancode, int action, int 
 int main(void){
     GLFWwindow* window;
 
-    /* Initialize the library */
     if (!glfwInit()){
         std::cout << "glfw not load" << std::endl;
         return -1;
     }
 
-    /* Create a windowed mode window and its OpenGL context */
     window = glfwCreateWindow(Win_Width, Win_Height, "Game_Engine", NULL, NULL);
     if (!window){
         glfwTerminate();
@@ -65,7 +65,6 @@ int main(void){
     glfwSetWindowSizeCallback(window, glfwWindowSizeCallback);
     glfwSetKeyCallback(window, glfwKeyCallback);
 
-    /* Make the window's context current */
     glfwMakeContextCurrent(window);
 
     if(!gladLoadGL()){
@@ -78,21 +77,14 @@ int main(void){
 
     glClearColor(1, 1, 1, 1);
 
-    GLuint vs = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vs, 1, &vertex_shader, nullptr);
-    glCompileShader(vs);
-
-    GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fs, 1, &fragment_shader, nullptr);
-    glCompileShader(fs);
-
-    GLuint shader_program = glCreateProgram();
-    glAttachShader(shader_program, vs);
-    glAttachShader(shader_program, fs);
-    glLinkProgram(shader_program);
-
-    glDeleteShader(vs);
-    glDeleteShader(fs);
+    std::string vertexShader(vertex_shader);
+    std::string fragmentShader(fragment_shader);
+    Render::ShaderProgram shaderProgram(vertexShader, fragmentShader);
+    
+    if (!shaderProgram.isCompiled()){
+        std::cerr << "cant compile shader in main program!";
+        return -1;
+    }
 
     GLuint points_vbo = 0;
     glGenBuffers(1, &points_vbo);
@@ -117,10 +109,9 @@ int main(void){
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
     while (!glfwWindowShouldClose(window)){
-
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glUseProgram(shader_program);
+        shaderProgram.use();
         glBindVertexArray(vao);
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
